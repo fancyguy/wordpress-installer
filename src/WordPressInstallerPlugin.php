@@ -25,13 +25,58 @@
 namespace FancyGuy\Composer\WordPressInstaller;
 
 use Composer\Composer;
+use Composer\EventDispatcher\EventSubscriberInterface;
 use Composer\IO\IOInterface;
+use Composer\Package\PackageInterface;
 use Composer\Plugin\PluginInterface;
+use Composer\Script\PackageEvent;
+use Composer\Script\ScriptEvents;
+use Symfony\Component\Filesystem\Filesystem;
 
-class WordPressInstallerPlugin implements PluginInterface {
+class WordPressInstallerPlugin implements PluginInterface, EventSubscriberInterface {
 
     public function activate(Composer $composer, IOInterface $io) {
         $composer->getInstallationManager()->addInstaller(new Installer\CoreInstaller($io, $composer));
+     }
+
+    public static function getSubscribedEvents() {
+        return array(
+            ScriptEvents::POST_PACKAGE_INSTALL => [
+                'applyOverlay',
+            ],
+            ScriptEvents::POST_PACKAGE_UPDATE => [
+                'applyOverlay',
+            ],
+        );
+    }
+
+    public function applyOverlay(PackageEvent $packageEvent) {
+        switch($packageEvent->getOperation()->getJobType()) {
+            case 'install':
+                $package = $packageEvent->getOperation()->getPackage();
+                break;
+            case 'update':
+                $package = $packageEvent->getOperation()-getTargetPackage();
+                break;
+            default:
+                return;
+        }
+
+        if (Installer\CoreInstaller::INSTALLER_TYPE === $package->getType()) {
+            $extra = $packageEvent->getComposer()->getPackage()->getExtra();
+            if (empty($extra['wordpress'])) {
+                return;
+            }
+            $config = $extra['wordpress'];
+            if (!empty($config['core-path']) && !empty($config['overlay-path'])) {
+                $filesystem = new Filesystem();
+
+                $corePath = $packageEvent->getComposer()->getInstallationManager()->getInstaller($package->getType())->getInstallPath($package);
+                $overlayPath = $config['overlay-path'];
+
+                $filesystem->mirror($overlayPath, $corePath, null, array('override' => true));
+            }
+        }
     }
 
 }
