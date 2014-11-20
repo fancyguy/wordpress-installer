@@ -1,0 +1,26 @@
+{
+    "name": "fancyguy/wordpress-installer",
+    "type": "composer-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steve Buzonas",
+            "email": "steve@fancyguy.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"FancyGuy\\Composer\\WordPressInstaller\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"FancyGuy\\Composer\\WordPressInstaller\\Tests\\": "tests/"}
+    },
+    "require": {
+        "composer-plugin-api": "1.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.1"
+    },
+    "extra": {
+        "class": "FancyGuy\\Composer\\WordPressInstaller\\WordPressInstallerPlugin"
+    }
+}
